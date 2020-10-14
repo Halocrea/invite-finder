@@ -10,7 +10,7 @@ const db = new Database(path.join(__dirname, '../../saves/server.db'));
 
 const createServerDB = `CREATE TABLE IF NOT EXISTS server (
   serverId VARCHAR(30),
-  logsChannelId INT(11)
+  logsChannelId VARCHAR(30)
 )`;
 db.exec(createServerDB);
 
@@ -24,9 +24,9 @@ export function editLogsChannelOnServer(server: Server) {
   db.prepare(updateServer).run([server.logsChannelId, server.serverId]);
 }
 
-export function getServers(): Server[] {
-  const getServers = 'SELECT * FROM server';
-  return db.prepare(getServers).all();
+export function getServer(serverId: string): Server {
+  const getServers = 'SELECT * FROM server WHERE serverId = ?';
+  return db.prepare(getServers).get(serverId);
 }
 
 export function deleteServer(serverId: string) {

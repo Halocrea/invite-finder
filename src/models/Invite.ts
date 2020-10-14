@@ -26,6 +26,11 @@ export function getInvitesFromServer(serverId: string): Invite[] {
   return db.prepare(getInvites).all(serverId);
 }
 
+export function editInviteUses(invite: Invite) {
+  const editInvite = 'UPDATE invite SET uses = ? WHERE serverId = ? AND code = ?';
+  return db.prepare(editInvite).run([invite.uses, invite.serverId, invite.code]);
+}
+
 export function deleteInvite(code: string) {
   const deleteInvite = 'DELTE FROM invite WHERE code = ?';
   return db.prepare(deleteInvite).run(code);

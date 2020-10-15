@@ -18,7 +18,7 @@ db.exec(createInviteDB);
 
 export function addInvite(invite: Invite) {
   const newInvite = 'INSERT INTO invite (serverId, code, uses) VALUES (@serverId, @code, @uses)';
-  return db.prepare(newInvite).run(invite);
+  db.prepare(newInvite).run(invite);
 }
 
 export function getInvitesFromServer(serverId: string): Invite[] {
@@ -28,10 +28,15 @@ export function getInvitesFromServer(serverId: string): Invite[] {
 
 export function editInviteUses(invite: Invite) {
   const editInvite = 'UPDATE invite SET uses = ? WHERE serverId = ? AND code = ?';
-  return db.prepare(editInvite).run([invite.uses, invite.serverId, invite.code]);
+  db.prepare(editInvite).run([invite.uses, invite.serverId, invite.code]);
 }
 
 export function deleteInvite(code: string) {
   const deleteInvite = 'DELTE FROM invite WHERE code = ?';
-  return db.prepare(deleteInvite).run(code);
+  db.prepare(deleteInvite).run(code);
+}
+
+export function deleteAllInvitesFromServer(serverId: string) {
+  const deleteInvites = 'DELETE FROM invite WHERE serverId = ?';
+  db.prepare(deleteInvites).run(serverId);
 }

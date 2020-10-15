@@ -25,8 +25,13 @@ export function editLogsChannelOnServer(server: Server) {
 }
 
 export function getServer(serverId: string): Server {
-  const getServers = 'SELECT * FROM server WHERE serverId = ?';
-  return db.prepare(getServers).get(serverId);
+  const getServer = 'SELECT * FROM server WHERE serverId = ?';
+  return db.prepare(getServer).get(serverId);
+}
+
+export function getServers(): Server[] {
+  const getServers = 'SELECT * FROM server';
+  return db.prepare(getServers).all();
 }
 
 export function deleteServer(serverId: string) {

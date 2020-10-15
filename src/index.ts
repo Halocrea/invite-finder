@@ -1,7 +1,7 @@
 import * as discord from 'discord.js';
 import * as dotenv from 'dotenv';
-import { addInvite, deleteInvite, editInviteUses, getInvitesFromServer } from './models/Invite';
-import { addServer, editLogsChannelOnServer, getServer } from './models/Server';
+import { addInvite, deleteAllInvitesFromServer, deleteInvite, editInviteUses, getInvitesFromServer } from './models/Invite';
+import { addServer, deleteServer, editLogsChannelOnServer, getServer, getServers } from './models/Server';
 
 dotenv.config();
 const inviteFinder = new discord.Client();
@@ -10,6 +10,10 @@ inviteFinder.once('ready', () => {
   inviteFinder.user?.setActivity(`les raiders`, {
     type: 'WATCHING',
   });
+  const servers = getServers();
+  for (const server of servers) {
+    synchronizeInvitesOnServer(server.serverId);
+  }
 });
 
 inviteFinder.on('inviteCreate', ({ guild, code, uses }) => {
@@ -23,6 +27,16 @@ inviteFinder.on('inviteCreate', ({ guild, code, uses }) => {
 inviteFinder.on('inviteDelete', ({ code }) => {
   deleteInvite(code);
 });
+
+inviteFinder.on('guildCreate', guild => {
+  addServer(guild.id);
+  synchronizeInvitesOnServer(guild.id);
+});
+
+inviteFinder.on('guildDelete', guild => {
+  deleteServer(guild.id);
+  deleteAllInvitesFromServer(guild.id);
+})
 
 inviteFinder.on('guildMemberAdd', member => {
   const invites = getInvitesFromServer(member.guild.id);
@@ -58,22 +72,8 @@ inviteFinder.on('message', msg => {
 
   if (msg.member?.hasPermission('ADMINISTRATOR') || msg.author.id === process.env.MAINTAINER_ID) {
     if (msg.content.startsWith('!gm-invites-sync')) {
-      msg.guild
-        .fetchInvites()
-        .then((invites) => {
-          invites.forEach(({ code, uses }) => {
-            addInvite({
-              serverId: msg.guild?.id!,
-              code,
-              uses: uses ?? 0,
-            });
-          });
-        })
-        .catch(console.error);
+      synchronizeInvitesOnServer(msg.guild.id);
       msg.channel.send(`✅ Invites successfully synchronised!`);
-    } else if (msg.content.startsWith('!gm-set-server')) {
-      addServer(msg.guild.id);
-      msg.channel.send(`✅ Server successfully added!`);
     } else if (msg.content.startsWith('!gm-set-logs-channel')) {
       editLogsChannelOnServer({
         serverId: msg.guild.id,
@@ -83,5 +83,24 @@ inviteFinder.on('message', msg => {
     }
   }  
 })
+
+function synchronizeInvitesOnServer(serverId: string) {
+  deleteAllInvitesFromServer(serverId);
+  const guild = inviteFinder.guilds.resolve(serverId);
+  if (guild) {
+    guild
+      .fetchInvites()
+      .then((invites) => {
+        invites.forEach(({ code, uses }) => {
+          addInvite({
+            serverId: guild.id!,
+            code,
+            uses: uses ?? 0,
+          });
+        });
+      })
+      .catch(console.error);
+  }
+}
 
 inviteFinder.login(process.env.TOKEN);

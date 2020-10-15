@@ -4,15 +4,15 @@ import { addInvite, deleteInvite, editInviteUses, getInvitesFromServer } from '.
 import { addServer, editLogsChannelOnServer, getServer } from './models/Server';
 
 dotenv.config();
-const inviteManager = new discord.Client();
+const inviteFinder = new discord.Client();
 
-inviteManager.once('ready', () => {
-  inviteManager.user?.setActivity(`les raiders`, {
+inviteFinder.once('ready', () => {
+  inviteFinder.user?.setActivity(`les raiders`, {
     type: 'WATCHING',
   });
 });
 
-inviteManager.on('inviteCreate', ({ guild, code, uses }) => {
+inviteFinder.on('inviteCreate', ({ guild, code, uses }) => {
   addInvite({
     serverId: guild?.id!,
     code,
@@ -20,11 +20,11 @@ inviteManager.on('inviteCreate', ({ guild, code, uses }) => {
   });
 });
 
-inviteManager.on('inviteDelete', ({ code }) => {
+inviteFinder.on('inviteDelete', ({ code }) => {
   deleteInvite(code);
 });
 
-inviteManager.on('guildMemberAdd', member => {
+inviteFinder.on('guildMemberAdd', member => {
   const invites = getInvitesFromServer(member.guild.id);
   member.guild
     .fetchInvites()
@@ -53,7 +53,7 @@ inviteManager.on('guildMemberAdd', member => {
     .catch(console.error);
 });
 
-inviteManager.on('message', msg => {
+inviteFinder.on('message', msg => {
   if (!msg.guild) return;
 
   if (msg.member?.hasPermission('ADMINISTRATOR') || msg.author.id === process.env.MAINTAINER_ID) {
@@ -84,4 +84,4 @@ inviteManager.on('message', msg => {
   }  
 })
 
-inviteManager.login(process.env.TOKEN);
+inviteFinder.login(process.env.TOKEN);

@@ -59,7 +59,18 @@ inviteFinder.on('guildMemberAdd', member => {
           const { logsChannelId } = getServer(member.guild.id);
           const logsChannel = member.guild.channels.resolve(logsChannelId);
           if (logsChannel && logsChannel instanceof discord.TextChannel) {
-            logsChannel.send(`${updatedInvite.code}`);
+            const memberCreatedDate = new Date(member.user?.createdTimestamp!);
+            logsChannel.send({
+              embed: {
+                title: `New member!`,
+                description: `User: ${member.user} | Created: ${memberCreatedDate.toLocaleDateString()}
+                Invite code: ${updatedInvite.code} | Created by: ${updatedInvite.inviter}`,
+                color: 6539563,
+                thumbnail: {
+                  url: member.user?.avatar,
+                },
+              },
+            });
           }
         }
       });

@@ -71,7 +71,7 @@ inviteFinder.on('guildMemberAdd', member => {
                 : member.user?.defaultAvatarURL;
             logsChannel.send({
               embed: {
-                title: `New member!`,
+                title: `Member joined!`,
                 description: `User: ${
                   member.user
                 } | Created: ${yearLifetime}y, ${memberLifetime.getMonth()}m, ${memberLifetime.getDay()}d, ${memberLifetime.getHours()}h, ${memberLifetime.getMinutes()}m, ${memberLifetime.getSeconds()}s

@@ -64,20 +64,28 @@ inviteFinder.on('guildMemberAdd', member => {
             const yearLifetime = Math.round(
               (now.getTime() - member.user?.createdTimestamp!) / 31536000000
             );
+            // Because he won't detect the null with a ternary
+            const avatar =
+              typeof member.user?.avatarURL() === 'string'
+                ? member.user?.avatarURL()
+                : member.user?.defaultAvatarURL;
             logsChannel.send({
               embed: {
                 title: `New member!`,
-                description: `User: ${member.user} | Created: ${yearLifetime}y, ${memberLifetime.getMonth()}m, ${memberLifetime.getDay()}d, ${memberLifetime.getHours()}h, ${memberLifetime.getMinutes()}m, ${memberLifetime.getSeconds()}s
+                description: `User: ${
+                  member.user
+                } | Created: ${yearLifetime}y, ${memberLifetime.getMonth()}m, ${memberLifetime.getDay()}d, ${memberLifetime.getHours()}h, ${memberLifetime.getMinutes()}m, ${memberLifetime.getSeconds()}s
                 Invite code: **${updatedInvite.code}** | Created by: ${updatedInvite.inviter}\n
                 Total Member Count: **${member.guild.memberCount}**`,
                 color: 6539563,
+                author: {
+                  name: `${member.user?.tag}`,
+                  icon_url: `${avatar}`,
+                },
                 footer: {
                   text: `${now.getHours() < 10 ? '0' + now.getHours() : now.getHours()}:${
                     now.getMinutes() < 10 ? '0' + now.getMinutes() : now.getMinutes()
                   }:${now.getSeconds() < 10 ? '0' + now.getSeconds() : now.getSeconds()}`,
-                },
-                thumbnail: {
-                  url: member.user?.avatar,
                 },
               },
             });

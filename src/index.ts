@@ -59,13 +59,23 @@ inviteFinder.on('guildMemberAdd', member => {
           const { logsChannelId } = getServer(member.guild.id);
           const logsChannel = member.guild.channels.resolve(logsChannelId);
           if (logsChannel && logsChannel instanceof discord.TextChannel) {
-            const memberCreatedDate = new Date(member.user?.createdTimestamp!);
+            const now = new Date();
+            const memberLifetime = new Date(now.getTime() - member.user?.createdTimestamp!);
+            const yearLifetime = Math.round(
+              (now.getTime() - member.user?.createdTimestamp!) / 31536000000
+            );
             logsChannel.send({
               embed: {
                 title: `New member!`,
-                description: `User: ${member.user} | Created: ${memberCreatedDate.toLocaleDateString()}
-                Invite code: ${updatedInvite.code} | Created by: ${updatedInvite.inviter}`,
+                description: `User: ${member.user} | Created: ${yearLifetime}y, ${memberLifetime.getMonth()}m, ${memberLifetime.getDay()}d, ${memberLifetime.getHours()}h, ${memberLifetime.getMinutes()}m, ${memberLifetime.getSeconds()}s
+                Invite code: **${updatedInvite.code}** | Created by: ${updatedInvite.inviter}\n
+                Total Member Count: **${member.guild.memberCount}**`,
                 color: 6539563,
+                footer: {
+                  text: `${now.getHours() < 10 ? '0' + now.getHours() : now.getHours()}:${
+                    now.getMinutes() < 10 ? '0' + now.getMinutes() : now.getMinutes()
+                  }:${now.getSeconds() < 10 ? '0' + now.getSeconds() : now.getSeconds()}`,
+                },
                 thumbnail: {
                   url: member.user?.avatar,
                 },

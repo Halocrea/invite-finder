@@ -43,7 +43,7 @@ inviteFinder.on('guildMemberAdd', member => {
   member.guild
     .fetchInvites()
     .then((serverInvites) => {
-      let updatedInvite: discord.Invite;
+      let updatedInvite: discord.Invite | null = null;
         const { logsChannelId } = getServer(member.guild.id);
         const logsChannel = member.guild.channels.resolve(logsChannelId);
       // We go through every server invites and compare with his stored clone
@@ -92,7 +92,7 @@ inviteFinder.on('guildMemberAdd', member => {
           }
         }
       });
-      if (logsChannel && logsChannel instanceof discord.TextChannel) {
+      if (!updatedInvite && logsChannel && logsChannel instanceof discord.TextChannel) {
         logsChannel.send(`Désolé les mecs, je ne sais pas comment il est arrivé là lui Oo'`);
       }
     })

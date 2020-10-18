@@ -47,6 +47,8 @@ inviteFinder.on('guildMemberAdd', member => {
       // We go through every server invites and compare with his stored clone
       serverInvites.forEach((serverInvite) => {
         const storedInvite = invites.find((invite) => invite.code === serverInvite.code);
+        const { logsChannelId } = getServer(member.guild.id);
+        const logsChannel = member.guild.channels.resolve(logsChannelId);
         if (storedInvite && serverInvite && storedInvite.uses < serverInvite.uses!) {
           // We save the good invite
           updatedInvite = serverInvite;
@@ -56,8 +58,6 @@ inviteFinder.on('guildMemberAdd', member => {
             code: updatedInvite.code,
             uses: updatedInvite.uses!
           })
-          const { logsChannelId } = getServer(member.guild.id);
-          const logsChannel = member.guild.channels.resolve(logsChannelId);
           if (logsChannel && logsChannel instanceof discord.TextChannel) {
             const now = new Date();
             const memberLifetime = new Date(now.getTime() - member.user?.createdTimestamp!);
@@ -89,6 +89,10 @@ inviteFinder.on('guildMemberAdd', member => {
                 },
               },
             });
+          }
+        } else {
+          if (logsChannel && logsChannel instanceof discord.TextChannel) {
+            logsChannel.send(`Désolé les mecs, je ne sais pas comment il est arrivé là lui Oo'`);
           }
         }
       });

@@ -40,6 +40,16 @@ inviteFinder.on('guildDelete', guild => {
 
 inviteFinder.on('guildMemberAdd', member => {
   const invites = getInvitesFromServer(member.guild.id);
+  const now = new Date();
+  const memberLifetime = new Date(now.getTime() - member.user?.createdTimestamp!);
+  const yearLifetime = Math.round(
+    (now.getTime() - member.user?.createdTimestamp!) / 31536000000
+  );
+  // Because he won't detect the null with a ternary
+  const avatar =
+    typeof member.user?.avatarURL() === 'string'
+      ? member.user?.avatarURL()
+      : member.user?.defaultAvatarURL;
   member.guild
     .fetchInvites()
     .then((serverInvites) => {
@@ -59,16 +69,6 @@ inviteFinder.on('guildMemberAdd', member => {
             uses: updatedInvite.uses!
           })
           if (logsChannel && logsChannel instanceof discord.TextChannel) {
-            const now = new Date();
-            const memberLifetime = new Date(now.getTime() - member.user?.createdTimestamp!);
-            const yearLifetime = Math.round(
-              (now.getTime() - member.user?.createdTimestamp!) / 31536000000
-            );
-            // Because he won't detect the null with a ternary
-            const avatar =
-              typeof member.user?.avatarURL() === 'string'
-                ? member.user?.avatarURL()
-                : member.user?.defaultAvatarURL;
             logsChannel.send({
               embed: {
                 title: `Member joined!`,
@@ -93,7 +93,26 @@ inviteFinder.on('guildMemberAdd', member => {
         }
       });
       if (!updatedInvite && logsChannel && logsChannel instanceof discord.TextChannel) {
-        logsChannel.send(`Désolé les mecs, je ne sais pas comment il est arrivé là lui Oo'`);
+        logsChannel.send({
+          embed: {
+            title: `Member joined!`,
+            description: `User: ${
+              member.user
+            } | Created: ${yearLifetime}y, ${memberLifetime.getMonth()}m, ${memberLifetime.getDay()}d, ${memberLifetime.getHours()}h, ${memberLifetime.getMinutes()}m, ${memberLifetime.getSeconds()}s
+                Invite code: ¯\_(ツ)_/¯\n
+                Total Member Count: **${member.guild.memberCount}**`,
+            color: 6539563,
+            author: {
+              name: `${member.user?.tag}`,
+              icon_url: `${avatar}`,
+            },
+            footer: {
+              text: `${now.getHours() < 10 ? '0' + now.getHours() : now.getHours()}:${
+                now.getMinutes() < 10 ? '0' + now.getMinutes() : now.getMinutes()
+              }:${now.getSeconds() < 10 ? '0' + now.getSeconds() : now.getSeconds()}`,
+            },
+          },
+        });
       }
     })
     .catch(console.error);

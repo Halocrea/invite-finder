@@ -39,6 +39,7 @@ inviteFinder.on('guildDelete', guild => {
 })
 
 inviteFinder.on('guildMemberAdd', member => {
+  synchronizeInvitesOnServer(member.guild.id);
   const invites = getInvitesFromServer(member.guild.id);
   const now = new Date();
   const memberLifetime = new Date(now.getTime() - member.user?.createdTimestamp!);

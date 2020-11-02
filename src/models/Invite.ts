@@ -17,7 +17,6 @@ const createInviteDB = `CREATE TABLE IF NOT EXISTS invite (
 db.exec(createInviteDB);
 
 export function addInvite(invite: Invite) {
-  console.log(invite);
   const newInvite = 'INSERT INTO invite (serverId, code, uses) VALUES (@serverId, @code, @uses)';
   db.prepare(newInvite).run(invite);
 }

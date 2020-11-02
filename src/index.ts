@@ -39,84 +39,7 @@ inviteFinder.on('guildDelete', guild => {
 })
 
 inviteFinder.on('guildMemberAdd', member => {
-  synchronizeInvitesOnServer(member.guild.id);
-  const invites = getInvitesFromServer(member.guild.id);
-  const now = new Date();
-  const memberLifetime = new Date(now.getTime() - member.user?.createdTimestamp!);
-  const yearLifetime = Math.round(
-    (now.getTime() - member.user?.createdTimestamp!) / 31536000000
-  );
-  // Because he won't detect the null with a ternary
-  const avatar =
-    typeof member.user?.avatarURL() === 'string'
-      ? member.user?.avatarURL()
-      : member.user?.defaultAvatarURL;
-  member.guild
-    .fetchInvites()
-    .then((serverInvites) => {
-      let updatedInvite: discord.Invite | null = null;
-        const { logsChannelId } = getServer(member.guild.id);
-        const logsChannel = member.guild.channels.resolve(logsChannelId);
-      // We go through every server invites and compare with his stored clone
-      serverInvites.forEach((serverInvite) => {
-        const storedInvite = invites.find((invite) => invite.code === serverInvite.code);
-        if (storedInvite && serverInvite && storedInvite.uses < serverInvite.uses!) {
-          // We save the good invite
-          updatedInvite = serverInvite;
-          // We store the update in DB
-          editInviteUses({
-            serverId: member.guild.id,
-            code: updatedInvite.code,
-            uses: updatedInvite.uses!
-          })
-          if (logsChannel && logsChannel instanceof discord.TextChannel) {
-            logsChannel.send({
-              embed: {
-                title: `Member joined!`,
-                description: `User: ${
-                  member.user
-                } | Created: ${yearLifetime}y, ${memberLifetime.getMonth()}m, ${memberLifetime.getDay()}d, ${memberLifetime.getHours()}h, ${memberLifetime.getMinutes()}m, ${memberLifetime.getSeconds()}s
-                Invite code: **${updatedInvite.code}** | Created by: ${updatedInvite.inviter}\n
-                Total Member Count: **${member.guild.memberCount}**`,
-                color: 6539563,
-                author: {
-                  name: `${member.user?.tag}`,
-                  icon_url: `${avatar}`,
-                },
-                footer: {
-                  text: `${now.getHours() < 10 ? '0' + now.getHours() : now.getHours()}:${
-                    now.getMinutes() < 10 ? '0' + now.getMinutes() : now.getMinutes()
-                  }:${now.getSeconds() < 10 ? '0' + now.getSeconds() : now.getSeconds()}`,
-                },
-              },
-            });
-          }
-        }
-      });
-      if (!updatedInvite && logsChannel && logsChannel instanceof discord.TextChannel) {
-        logsChannel.send({
-          embed: {
-            title: `Member joined!`,
-            description: `User: ${
-              member.user
-            } | Created: ${yearLifetime}y, ${memberLifetime.getMonth()}m, ${memberLifetime.getDay()}d, ${memberLifetime.getHours()}h, ${memberLifetime.getMinutes()}m, ${memberLifetime.getSeconds()}s
-                Invite code: ¯\_(ツ)_/¯\n
-                Total Member Count: **${member.guild.memberCount}**`,
-            color: 6539563,
-            author: {
-              name: `${member.user?.tag}`,
-              icon_url: `${avatar}`,
-            },
-            footer: {
-              text: `${now.getHours() < 10 ? '0' + now.getHours() : now.getHours()}:${
-                now.getMinutes() < 10 ? '0' + now.getMinutes() : now.getMinutes()
-              }:${now.getSeconds() < 10 ? '0' + now.getSeconds() : now.getSeconds()}`,
-            },
-          },
-        });
-      }
-    })
-    .catch(console.error);
+  findInvite(member);
 });
 
 inviteFinder.on('message', msg => {
@@ -152,6 +75,88 @@ function synchronizeInvitesOnServer(serverId: string) {
         });
       })
       .catch(console.error);
+  }
+}
+
+function findInvite(member: discord.GuildMember | discord.PartialGuildMember) {
+  const invites = getInvitesFromServer(member.guild.id);
+  member.guild
+    .fetchInvites()
+    .then((serverInvites) => {
+      let updatedInvite: discord.Invite | null = null;
+      const { logsChannelId } = getServer(member.guild.id);
+      const logsChannel = member.guild.channels.resolve(logsChannelId);
+      // We go through every server invites and compare with his stored clone
+      serverInvites.forEach((serverInvite) => {
+        const storedInvite = invites.find((invite) => invite.code === serverInvite.code);
+        if (storedInvite && serverInvite && storedInvite.uses < serverInvite.uses!) {
+          // We save the good invite
+          updatedInvite = serverInvite;
+          // We store the update in DB
+          editInviteUses({
+            serverId: member.guild.id,
+            code: updatedInvite.code,
+            uses: updatedInvite.uses!,
+          });
+          sendNewMemberEmbed(logsChannel, updatedInvite, member);
+        // Not finding a stored invite means that a new invite has been used
+        } else if (!storedInvite) {
+          updatedInvite = serverInvite;
+          addInvite({
+            serverId: member.guild.id,
+            code: updatedInvite.code,
+            uses: updatedInvite.uses!,
+          });
+          if (logsChannel && logsChannel instanceof discord.TextChannel) {
+            sendNewMemberEmbed(logsChannel, updatedInvite, member);
+          }
+        }
+      });
+      if (!updatedInvite && logsChannel && logsChannel instanceof discord.TextChannel) {
+        sendNewMemberEmbed(logsChannel, null, member);
+      }
+    })
+    .catch(console.error);
+}
+
+function sendNewMemberEmbed(
+  logsChannel: discord.GuildChannel | null,
+  updatedInvite: discord.Invite | null,
+  member: discord.GuildMember | discord.PartialGuildMember
+) {
+  const now = new Date();
+  const memberLifetime = new Date(now.getTime() - member.user?.createdTimestamp!);
+  const yearLifetime = Math.round((now.getTime() - member.user?.createdTimestamp!) / 31536000000);
+  // Because he won't detect the null with a ternary
+  const avatar =
+    typeof member.user?.avatarURL() === 'string'
+      ? member.user?.avatarURL()
+      : member.user?.defaultAvatarURL;
+  if (logsChannel && logsChannel instanceof discord.TextChannel) {
+    logsChannel.send({
+      embed: {
+        title: `Member joined!`,
+        description: `User: ${
+          member.user
+        } | Created: ${yearLifetime}y, ${memberLifetime.getMonth()}m, ${memberLifetime.getDay()}d, ${memberLifetime.getHours()}h, ${memberLifetime.getMinutes()}m, ${memberLifetime.getSeconds()}s
+        Invite code: **${
+          updatedInvite
+            ? `${updatedInvite.code}** | Created by: ${updatedInvite.inviter}`
+            : `¯&#92;_(ツ)_/¯`
+        }\n
+        Total Member Count: **${member.guild.memberCount}**`,
+        color: 6539563,
+        author: {
+          name: `${member.user?.tag}`,
+          icon_url: `${avatar}`,
+        },
+        footer: {
+          text: `${now.getHours() < 10 ? '0' + now.getHours() : now.getHours()}:${
+            now.getMinutes() < 10 ? '0' + now.getMinutes() : now.getMinutes()
+          }:${now.getSeconds() < 10 ? '0' + now.getSeconds() : now.getSeconds()}`,
+        },
+      },
+    });
   }
 }
 

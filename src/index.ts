@@ -10,10 +10,8 @@ inviteFinder.once('ready', () => {
   inviteFinder.user?.setActivity(`les raiders`, {
     type: 'WATCHING',
   });
-  const servers = getServers();
-  for (const server of servers) {
-    synchronizeInvitesOnServer(server.serverId);
-  }
+  synchronizeAllServers();
+  setInterval(() => synchronizeAllServers(), 15 * 60 * 1000);
 });
 
 inviteFinder.on('inviteCreate', ({ guild, code, uses }) => {
@@ -157,6 +155,13 @@ function sendNewMemberEmbed(
         },
       },
     });
+  }
+}
+
+function synchronizeAllServers() {
+  const servers = getServers();
+  for (const server of servers) {
+    synchronizeInvitesOnServer(server.serverId);
   }
 }
 

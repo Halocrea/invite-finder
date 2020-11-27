@@ -7,6 +7,7 @@ dotenv.config();
 const inviteFinder = new discord.Client({
   ws: {
     intents: [
+      'GUILD_MEMBERS',
       'GUILD_INVITES',
       'GUILD_MESSAGES'
     ]

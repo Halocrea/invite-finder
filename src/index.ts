@@ -4,7 +4,14 @@ import { addInvite, deleteAllInvitesFromServer, deleteInvite, editInviteUses, ge
 import { addServer, deleteServer, editLogsChannelOnServer, getServer, getServers } from './models/Server';
 
 dotenv.config();
-const inviteFinder = new discord.Client();
+const inviteFinder = new discord.Client({
+  ws: {
+    intents: [
+      'GUILD_INVITES',
+      'GUILD_MESSAGES'
+    ]
+  }
+});
 
 inviteFinder.once('ready', () => {
   inviteFinder.user?.setActivity(`les raiders`, {

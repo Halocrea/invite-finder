@@ -27,6 +27,11 @@ inviteFinder.on('inviteCreate', ({ guild, code, uses }) => {
     code,
     uses: uses ?? 0
   });
+  const { logsChannelId } = getServer(guild?.id!);
+  const logsChannel = guild?.channels.resolve(logsChannelId);
+  if (logsChannel && logsChannel instanceof discord.TextChannel) {
+    logsChannel.send('Beep boop nouvelle invite ça marche cette merde en fait');
+  }
 });
 
 inviteFinder.on('inviteDelete', ({ code }) => {
